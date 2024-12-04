@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SumChecker</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Include the Lexend font -->
+    <style>
+        @font-face {
+            font-family: 'Lexend';
+            src: url('Lexend-Regular.ttf') format('truetype');
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SumChecker</h1>
+        <div class="input-group">
+            <input type="text" id="checksum-input" placeholder="Enter checksum to compare">
+            <button id="clear-input">X</button>
+        </div>
+        <button id="file-selector">Select File</button>
+        <input type="file" id="file-input" style="display: none;">
+        <div id="file-info" style="display: none;">
+            <p>Selected File: <span id="file-name"></span> <button id="clear-file">X</button></p>
+            <p>File Size: <span id="file-size"></span> bytes</p>
+        </div>
+        <div id="checksums"></div>
+    </div>
+
+    <script src="hashes.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
