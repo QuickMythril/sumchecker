@@ -80,5 +80,13 @@ h1 {
 }
 
 .checksum-item.invalid {
-    color: #ffffff;
+    color: #ff4d4d; /* Red color for invalid */
+}
+
+.checksum-item.pending {
+    color: #cccccc; /* Grey color for pending */
+}
+
+.checksum-item.calculating {
+    color: dodgerblue; /* Dodgerblue color for calculating */
 }

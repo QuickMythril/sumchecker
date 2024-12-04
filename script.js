@@ -8,38 +8,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileNameDisplay = document.getElementById('file-name');
     const fileSizeDisplay = document.getElementById('file-size');
     const checksumsDiv = document.getElementById('checksums');
-
     let fileContent = null;
-
+    // List of algorithms
+    const algorithms = ['MD5', 'SHA1', 'SHA256', 'SHA512'];
+    let checksumResults = {};
+    // Initialize checksumResults
+    algorithms.forEach(algo => {
+        checksumResults[algo] = 'Pending';
+    });
     // Handle file selection
     fileSelector.addEventListener('click', function() {
         fileInput.click();
     });
-
     fileInput.addEventListener('change', function(event) {
         const file = event.target.files[0];
         if (file) {
             fileNameDisplay.textContent = file.name;
-            fileSizeDisplay.textContent = file.size;
+            fileSizeDisplay.textContent = formatFileSize(file.size);
             fileInfo.style.display = 'block';
+            resetChecksumResults();
             readFile(file);
         }
     });
-
     // Clear input field
     clearInputButton.addEventListener('click', function() {
         checksumInput.value = '';
         updateChecksums();
     });
-
     // Clear selected file
     clearFileButton.addEventListener('click', function() {
         fileInput.value = '';
         fileInfo.style.display = 'none';
         checksumsDiv.innerHTML = '';
         fileContent = null;
+        resetChecksumResults();
     });
-
     // Update checksums when input changes
     checksumInput.addEventListener('input', function() {
         updateChecksums();
@@ -48,28 +51,69 @@ document.addEventListener('DOMContentLoaded', function() {
     function readFile(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            fileContent = e.target.result;
-            calculateChecksums();
+            const arrayBuffer = e.target.result;
+            const bytes = new Uint8Array(arrayBuffer);
+            fileContent = Array.from(bytes).map(byte => String.fromCharCode(byte)).join('');
+            displayInitialChecksums();
+            calculateChecksumsSequentially();
         };
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
     }
 
-    function calculateChecksums() {
-        if (!fileContent) return;
+    function formatFileSize(size) {
+        if (size >= 1024 * 1024) {
+            return (size / (1024 * 1024)).toFixed(2) + ' MB';
+        } else if (size >= 1024) {
+            return (size / 1024).toFixed(2) + ' KB';
+        } else {
+            return size + ' bytes';
+        }
+    }
 
-        const md5 = new Hashes.MD5().hex(fileContent);
-        const sha1 = new Hashes.SHA1().hex(fileContent);
-        const sha256 = new Hashes.SHA256().hex(fileContent);
-        const sha512 = new Hashes.SHA512().hex(fileContent);
+    function displayInitialChecksums() {
+        checksumsDiv.innerHTML = '';
+        algorithms.forEach(algo => {
+            checksumsDiv.innerHTML += `
+                <div class="checksum-item" id="${algo.toLowerCase()}">${algo}: Pending</div>
+            `;
+        });
+    }
 
-        checksumsDiv.innerHTML = `
-            <div class="checksum-item" id="md5">MD5: ${md5}</div>
-            <div class="checksum-item" id="sha1">SHA1: ${sha1}</div>
-            <div class="checksum-item" id="sha256">SHA256: ${sha256}</div>
-            <div class="checksum-item" id="sha512">SHA512: ${sha512}</div>
-        `;
+    function resetChecksumResults() {
+        algorithms.forEach(algo => {
+            checksumResults[algo] = 'Pending';
+        });
+    }
 
-        updateChecksums();
+    function calculateChecksumsSequentially() {
+        let index = 0;
+        function calculateNext() {
+            if (index >= algorithms.length) {
+                updateChecksums();
+                return;
+            }
+            const algo = algorithms[index];
+            const checksumElement = document.getElementById(algo.toLowerCase());
+            checksumElement.textContent = `${algo}: Calculating...`;
+            setTimeout(() => {
+                let hash;
+                if (algo === 'MD5') {
+                    hash = new Hashes.MD5().hex(fileContent);
+                } else if (algo === 'SHA1') {
+                    hash = new Hashes.SHA1().hex(fileContent);
+                } else if (algo === 'SHA256') {
+                    hash = new Hashes.SHA256().hex(fileContent);
+                } else if (algo === 'SHA512') {
+                    hash = new Hashes.SHA512().hex(fileContent);
+                }
+                checksumResults[algo] = hash;
+                checksumElement.innerHTML = `${algo}: <code>${hash}</code>`;
+                updateChecksums();
+                index++;
+                calculateNext();
+            }, 100); // Small delay to allow UI updates
+        }
+        calculateNext();
     }
 
     function updateChecksums() {
@@ -78,17 +122,16 @@ document.addEventListener('DOMContentLoaded', function() {
             resetChecksumStyles();
             return;
         }
-
-        ['md5', 'sha1', 'sha256', 'sha512'].forEach(function(algorithm) {
-            const checksumElement = document.getElementById(algorithm);
+        algorithms.forEach(algo => {
+            const checksumElement = document.getElementById(algo.toLowerCase());
             if (!checksumElement) return;
-            const checksumText = checksumElement.textContent.split(': ')[1].trim().toLowerCase();
-            if (checksumText === inputChecksum) {
+            const checksumValue = checksumResults[algo];
+            if (checksumValue.toLowerCase() === inputChecksum) {
                 checksumElement.classList.add('valid');
                 checksumElement.classList.remove('invalid');
-            } else {
-                checksumElement.classList.add('invalid');
+            } else if (checksumValue !== 'Pending' && checksumValue !== 'Calculating...') {
                 checksumElement.classList.remove('valid');
+                checksumElement.classList.add('invalid');
             }
         });
     }
