@@ -98,13 +98,13 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 let hash;
                 if (algo === 'MD5') {
-                    hash = new Hashes.MD5().hex(fileContent);
+                    hash = new Hashes.MD5({ utf8: false }).hex(fileContent);
                 } else if (algo === 'SHA1') {
-                    hash = new Hashes.SHA1().hex(fileContent);
+                    hash = new Hashes.SHA1({ utf8: false }).hex(fileContent);
                 } else if (algo === 'SHA256') {
-                    hash = new Hashes.SHA256().hex(fileContent);
+                    hash = new Hashes.SHA256({ utf8: false }).hex(fileContent);
                 } else if (algo === 'SHA512') {
-                    hash = new Hashes.SHA512().hex(fileContent);
+                    hash = new Hashes.SHA512({ utf8: false }).hex(fileContent);
                 }
                 checksumResults[algo] = hash;
                 checksumElement.innerHTML = `${algo}: <code>${hash}</code>`;
